@@ -83,31 +83,6 @@ override_dh_auto_configure:
 		-DFEATURE_relocatable=OFF \
 		$(extra_cmake_args)
 
-
-execute_after_dh_auto_install:
-	# Policy § 10.4. Remove this if https://bugs.debian.org/904409 gets fixed.
-	sed -i 's,bin/env perl,bin/perl,' debian/tmp/usr/lib/qt6/libexec/*.pl \
-		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/qt6/mkspecs/features/data/unix/findclasslist.pl
-
-	# Reproducible builds: remove build paths from .prl files
-	sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libQt6*.prl
-
-	# Specifies parameters to pass to the platform plugin.
-	mkdir -p debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/qt6
-	sed 's/@DEB_HOST_MULTIARCH@/$(DEB_HOST_MULTIARCH)/' debian/qt.conf.in \
-		> debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/qt6/qt6.conf
-
-	# Inject cross-wrapper for qmake6
-	mkdir -p debian/tmp/usr/bin
-	sed -e 's/@DEB_HOST_MULTIARCH@/$(DEB_HOST_MULTIARCH)/g' \
-		-e 's/@DEB_HOST_GNU_TYPE@/$(DEB_HOST_GNU_TYPE)/g' \
-		< debian/qmake-cross-wrapper.in > debian/tmp/usr/bin/$(DEB_HOST_GNU_TYPE)-qmake6
-	chmod +x debian/tmp/usr/bin/$(DEB_HOST_GNU_TYPE)-qmake6
-
-	# Fix Qt6::qmake IMPORTED_LOCATION, see https://bugs.debian.org/1030980
-	sed -i 's,lib/qt6/bin/qmake,bin/$(DEB_HOST_GNU_TYPE)-qmake6,' \
-		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/Qt6CoreTools/Qt6CoreToolsTargets-none.cmake
-
 override_dh_makeshlibs:
 	dh_makeshlibs -XlibQt6EglFSDeviceIntegration -XlibQt6EglFsKmsGbmSupport -XlibQt6EglFsKmsSupport -XlibQt6XcbQpa
 
